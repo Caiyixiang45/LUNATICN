@@ -1,0 +1,31 @@
+# ---------- 通用 ----------
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+
+# ---------- Go ----------
+server/vendor/
+*.exe
+*.test
+
+# ---------- .NET / WinUI ----------
+bin/
+obj/
+*.user
+*.suo
+.vs/
+appsettings.Secret.json
+
+# ---------- 运行时数据（引擎/存档/模组，不入库） ----------
+data/engine/
+data/worlds/
+data/mods/
+data/games/
+data/uploads/
+data/cache/
+
+# ---------- 密钥与本地配置 ----------
+config.local.yaml
+*.pem
+*.key
