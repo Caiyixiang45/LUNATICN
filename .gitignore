@@ -1,0 +1,11 @@
+# 编译产物
+roomd.exe
+roomd
+*.exe
+
+# 本地配置（含账号密码，绝不入库）
+config.json
+
+# 日志与数据
+*.log
+data/

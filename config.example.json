@@ -1,0 +1,17 @@
+{
+  "registry": "http://localhost:8080",
+  "username": "your_account",
+  "password": "your_password",
+  "room_name": "My Room",
+  "luanti_path": "C:/Luanti/bin/luanti.exe",
+  "world": "",
+  "worldname": "world",
+  "gameid": "minetest",
+  "port": 30000,
+  "max_players": 8,
+  "host": "",
+  "has_password": false,
+  "private": false,
+  "description": "",
+  "config_file": ""
+}
