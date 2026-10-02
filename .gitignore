@@ -29,3 +29,13 @@ data/cache/
 config.local.yaml
 *.pem
 *.key
+
+# ---------- 服务端运行时（密钥/数据库/模组仓库，不入库）----------
+server/config.json
+server/data/
+server/mods_repo/
+server/mods/
+
+# ---------- Python ----------
+__pycache__/
+*.pyc

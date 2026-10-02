@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LUNATICN 管理后台</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#EDF1F7;--card:rgba(255,255,255,.7);--card-solid:#fff;--primary:#1E88FF;
+  --primary-dark:#166FD6;--text:#1F2937;--muted:#6B7684;--line:rgba(31,41,55,.10);
+  --danger:#E0455B;--ok:#18A05C;--radius:14px;
+}
+html,body{height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei","PingFang SC","Helvetica Neue",Arial,sans-serif;
+  background:
+    radial-gradient(1100px 520px at 12% -8%,rgba(30,136,255,.16),transparent 60%),
+    radial-gradient(900px 480px at 96% 4%,rgba(24,160,92,.12),transparent 62%),
+    var(--bg);
+  color:var(--text);font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased;
+}
+.hidden{display:none !important}
+button,input,select,textarea{font-family:inherit;font-size:14px;color:inherit}
+input,select,textarea{
+  width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;
+  background:rgba(255,255,255,.85);outline:none;transition:border-color .15s,box-shadow .15s;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(30,136,255,.16)}
+textarea{min-height:96px;resize:vertical}
+label{display:block;font-size:12px;color:var(--muted);margin:10px 0 4px}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:9px 16px;border:1px solid transparent;border-radius:10px;cursor:pointer;
+  background:var(--primary);color:#fff;font-weight:600;transition:background .15s,transform .05s;
+}
+.btn:hover{background:var(--primary-dark)}
+.btn:active{transform:translateY(1px)}
+.btn.ghost{background:rgba(255,255,255,.75);color:var(--text);border-color:var(--line)}
+.btn.ghost:hover{background:#fff}
+.btn.danger{background:var(--danger)}
+.btn.danger:hover{background:#C7364B}
+.btn.sm{padding:5px 10px;font-size:12px;border-radius:8px}
+.btn[disabled]{opacity:.6;cursor:not-allowed}
+/* ---------- 登录 ---------- */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.login-card{
+  width:100%;max-width:380px;background:var(--card);backdrop-filter:blur(18px);
+  border:1px solid rgba(255,255,255,.8);border-radius:20px;padding:32px 28px;
+  box-shadow:0 18px 50px rgba(31,41,55,.12);
+}
+.login-card h1{font-size:20px;margin-bottom:4px}
+.login-card p.sub{color:var(--muted);font-size:13px;margin-bottom:14px}
+.login-err{color:var(--danger);font-size:13px;min-height:20px;margin-top:8px}
+.login-card .btn{width:100%;margin-top:14px}
+/* ---------- 布局 ---------- */
+.layout{display:flex;min-height:100vh}
+.sidebar{
+  width:216px;flex:0 0 216px;padding:22px 16px;position:sticky;top:0;height:100vh;
+  display:flex;flex-direction:column;gap:6px;
+}
+.brand{
+  background:var(--card);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.8);
+  border-radius:var(--radius);padding:14px 14px 12px;margin-bottom:14px;
+  box-shadow:0 8px 24px rgba(31,41,55,.08);
+}
+.brand .name{font-size:16px;font-weight:700;color:var(--primary);letter-spacing:.4px}
+.brand .desc{font-size:12px;color:var(--muted)}
+.nav{
+  display:flex;flex-direction:column;gap:4px;background:var(--card);
+  backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.8);
+  border-radius:var(--radius);padding:8px;box-shadow:0 8px 24px rgba(31,41,55,.06);
+}
+.nav button{
+  text-align:left;padding:9px 12px;border:0;background:transparent;border-radius:10px;
+  cursor:pointer;color:var(--text);font-weight:500;transition:background .15s,color .15s;
+}
+.nav button:hover{background:rgba(30,136,255,.08)}
+.nav button.active{background:var(--primary);color:#fff}
+.side-foot{margin-top:auto;font-size:12px;color:var(--muted);padding:8px 4px}
+.main{flex:1;padding:26px 26px 60px;min-width:0}
+.view-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.view-head h2{font-size:22px}
+.view-head .tip{color:var(--muted);font-size:13px}
+.card{
+  background:var(--card);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.8);
+  border-radius:var(--radius);padding:18px;box-shadow:0 10px 30px rgba(31,41,55,.07);
+}
+.card + .card{margin-top:16px}
+.card h3{font-size:15px;margin-bottom:12px}
+/* ---------- 概览 ---------- */
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px}
+.stat{background:var(--card);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.8);
+  border-radius:var(--radius);padding:16px 18px;box-shadow:0 10px 30px rgba(31,41,55,.07)}
+.stat .k{font-size:13px;color:var(--muted)}
+.stat .v{font-size:30px;font-weight:700;color:var(--primary);line-height:1.3}
+/* ---------- 表格 ---------- */
+.tbl-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.6)}
+table{width:100%;border-collapse:collapse;min-width:520px}
+th,td{padding:10px 12px;text-align:left;font-size:13px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{color:var(--muted);font-weight:600;background:rgba(255,255,255,.7);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+tbody tr:hover{background:rgba(30,136,255,.05)}
+.mono{font-family:Consolas,"Courier New",monospace;font-size:12px}
+/* ---------- 表单 ---------- */
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:6px 14px}
+.form-actions{margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.state{padding:26px 12px;text-align:center;color:var(--muted)}
+.state.error{color:var(--danger)}
+.state .btn{margin-top:10px}
+.tag{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;background:rgba(30,136,255,.12);color:var(--primary)}
+.tag.gray{background:rgba(31,41,55,.08);color:var(--muted)}
+.tag.green{background:rgba(24,160,92,.14);color:var(--ok)}
+.tag.red{background:rgba(224,69,91,.12);color:var(--danger)}
+.ann-item{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:rgba(255,255,255,.65);margin-bottom:10px}
+.ann-item .t{font-weight:600;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ann-item .b{color:var(--muted);margin-top:4px;white-space:pre-wrap;word-break:break-word}
+.ann-item .m{font-size:12px;color:var(--muted);margin-top:6px;display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+/* ---------- 提示 ---------- */
+#toast{position:fixed;right:20px;bottom:20px;z-index:99;display:flex;flex-direction:column;gap:8px;max-width:340px}
+.toast{
+  background:rgba(31,41,55,.94);color:#fff;padding:10px 14px;border-radius:10px;
+  font-size:13px;box-shadow:0 10px 26px rgba(0,0,0,.22);animation:tin .18s ease-out;
+}
+.toast.ok{background:rgba(24,160,92,.95)}
+.toast.err{background:rgba(224,69,91,.95)}
+@keyframes tin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media (max-width:860px){
+  .layout{flex-direction:column}
+  .sidebar{width:auto;flex:none;height:auto;position:static;padding:14px 14px 0}
+  .brand{margin-bottom:10px}
+  .nav{flex-direction:row;overflow-x:auto}
+  .nav button{white-space:nowrap}
+  .side-foot{display:none}
+  .main{padding:18px 14px 50px}
+}
+</style>
+</head>
+<body>
+
+<div id="login" class="login-wrap">
+  <div class="login-card">
+    <h1>LUNATICN 管理后台</h1>
+    <p class="sub">请输入服务端配置中的管理令牌（admin_token）</p>
+    <label for="tok">管理令牌</label>
+    <input id="tok" type="password" placeholder="粘贴管理令牌" autocomplete="off">
+    <div id="loginErr" class="login-err"></div>
+    <button id="loginBtn" class="btn">进入后台</button>
+  </div>
+</div>
+
+<div id="app" class="layout hidden">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="name">LUNATICN</div>
+      <div class="desc">社区服务端 · 管理后台</div>
+    </div>
+    <nav class="nav" id="nav">
+      <button data-view="overview" class="active">概览</button>
+      <button data-view="users">用户管理</button>
+      <button data-view="ann">公告</button>
+      <button data-view="rooms">房间</button>
+      <button data-view="servers">固定服务器</button>
+      <button data-view="mods">模组仓库</button>
+      <button data-view="packages">分享包</button>
+      <button data-view="update">更新推送</button>
+    </nav>
+    <div class="side-foot">
+      <button id="logoutBtn" class="btn ghost sm">退出登录</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <section id="view-overview" class="view">
+      <div class="view-head">
+        <h2>概览</h2>
+        <button class="btn ghost sm" data-reload="overview">刷新</button>
+      </div>
+      <div id="statsBox" class="stats"></div>
+    </section>
+
+    <section id="view-users" class="view hidden">
+      <div class="view-head">
+        <h2>用户管理</h2>
+        <button class="btn ghost sm" data-reload="users">刷新</button>
+      </div>
+      <div class="card">
+        <h3>新建用户</h3>
+        <div class="form-grid">
+          <div><label>用户名（小写字母/数字/下划线/连字符，3-24 位）</label>
+            <input id="nuName" placeholder="例如 player01"></div>
+          <div><label>密码（至少 6 位）</label>
+            <input id="nuPass" type="password" placeholder="登录密码"></div>
+          <div><label>昵称（可空，默认同用户名）</label>
+            <input id="nuNick" placeholder="展示名称"></div>
+        </div>
+        <div class="form-actions">
+          <button id="nuBtn" class="btn">创建用户</button>
+          <span class="tip" id="nuMsg"></span>
+        </div>
+      </div>
+      <div class="card">
+        <h3>用户列表</h3>
+        <div id="usersBox"></div>
+      </div>
+    </section>
+
+    <section id="view-ann" class="view hidden">
+      <div class="view-head">
+        <h2>公告</h2>
+        <button class="btn ghost sm" data-reload="ann">刷新</button>
+      </div>
+      <div class="card">
+        <h3>发布公告</h3>
+        <div class="form-grid">
+          <div><label>标题</label><input id="annTitle" placeholder="公告标题"></div>
+          <div><label>级别</label>
+            <select id="annLevel">
+              <option value="info">普通（info）</option>
+              <option value="warning">警告（warning）</option>
+              <option value="update">更新（update）</option>
+            </select></div>
+        </div>
+        <label>正文</label>
+        <textarea id="annBody" placeholder="公告正文内容"></textarea>
+        <div class="form-actions">
+          <label style="margin:0;display:flex;align-items:center;gap:6px">
+            <input id="annPin" type="checkbox" style="width:auto"> 置顶
+          </label>
+          <button id="annBtn" class="btn">发布公告</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>公告列表</h3>
+        <div id="annBox"></div>
+      </div>
+    </section>
+
+    <section id="view-rooms" class="view hidden">
+      <div class="view-head">
+        <h2>房间</h2>
+        <button class="btn ghost sm" data-reload="rooms">刷新</button>
+      </div>
+      <div class="card"><div id="roomsBox"></div></div>
+    </section>
+
+    <section id="view-servers" class="view hidden">
+      <div class="view-head">
+        <h2>固定服务器</h2>
+        <button class="btn ghost sm" data-reload="servers">刷新</button>
+      </div>
+      <div class="card">
+        <h3>新建固定服务器</h3>
+        <div class="form-grid">
+          <div><label>房间名</label><input id="fsName" placeholder="例如 官方一服"></div>
+          <div><label>可执行文件（luantiserver 完整路径）</label><input id="fsBin" placeholder="E:\server\luantiserver.exe"></div>
+          <div><label>端口</label><input id="fsPort" type="number" value="30000"></div>
+          <div><label>游戏 ID（可空）</label><input id="fsGame" placeholder="mineclonia"></div>
+          <div><label>世界路径（可空）</label><input id="fsWorld" placeholder="E:\worlds\world"></div>
+          <div><label>配置文件（可空）</label><input id="fsConf" placeholder="E:\server\minetest.conf"></div>
+        </div>
+        <div class="form-actions">
+          <button id="fsBtn" class="btn">创建并启动</button>
+          <span class="tip" id="fsMsg"></span>
+        </div>
+      </div>
+      <div class="card"><div id="serversBox"></div></div>
+    </section>
+
+    <section id="view-mods" class="view hidden">
+      <div class="view-head">
+        <h2>模组仓库</h2>
+        <button class="btn ghost sm" data-reload="mods">刷新</button>
+      </div>
+      <div class="card">
+        <h3>上传官方模组 zip</h3>
+        <div class="form-grid">
+          <div><label>模组压缩包（含 mod.conf / modpack.conf / init.lua）</label>
+            <input id="mdFile" type="file" accept=".zip"></div>
+        </div>
+        <div class="form-actions">
+          <button id="mdBtn" class="btn">上传</button>
+          <span class="tip" id="mdMsg"></span>
+        </div>
+      </div>
+      <div class="card"><div id="modsBox"></div></div>
+    </section>
+
+    <section id="view-packages" class="view hidden">
+      <div class="view-head">
+        <h2>分享包</h2>
+        <button class="btn ghost sm" data-reload="packages">刷新</button>
+      </div>
+      <div class="card">
+        <div class="form-grid">
+          <div><label>类型</label>
+            <select id="pkType">
+              <option value="">全部</option>
+              <option value="map">地图</option>
+              <option value="mod">模组</option>
+            </select></div>
+          <div><label>关键字</label><input id="pkKw" placeholder="名称或描述"></div>
+        </div>
+        <div class="form-actions">
+          <button id="pkBtn" class="btn">查询</button>
+        </div>
+      </div>
+      <div class="card"><div id="pkBox"></div></div>
+    </section>
+
+    <section id="view-update" class="view hidden">
+      <div class="view-head">
+        <h2>更新推送</h2>
+        <button class="btn ghost sm" data-reload="update">刷新</button>
+      </div>
+      <div class="card">
+        <h3>客户端版本推送</h3>
+        <div id="updCurrent" class="tip" style="margin-bottom:6px;color:var(--muted)"></div>
+        <div class="form-grid">
+          <div><label>版本号（如 1.1.0）</label><input id="updVer" placeholder="1.1.0"></div>
+        </div>
+        <label>更新说明</label>
+        <textarea id="updNotes" placeholder="本次更新内容"></textarea>
+        <label>镜像地址（每行一个，按顺序兜底）</label>
+        <textarea id="updMirrors" placeholder="https://example.com/LUNATICN-client.zip"></textarea>
+        <div class="form-actions">
+          <button id="updBtn" class="btn">保存并推送</button>
+          <span class="tip" id="updMsg"></span>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<script>
+"use strict";
+const KEY = "lunaticn_admin_token";
+const $ = (s) => document.querySelector(s);
+let currentView = "overview";
+
+function token() { return localStorage.getItem(KEY) || ""; }
+
+function toast(msg, kind) {
+  const box = $("#toast");
+  const el = document.createElement("div");
+  el.className = "toast" + (kind ? " " + kind : "");
+  el.textContent = msg;
+  box.appendChild(el);
+  setTimeout(() => { el.remove(); }, 3600);
+}
+
+function esc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+}
+
+function fmtTime(v) {
+  if (!v) return "—";
+  const d = new Date(v);
+  if (isNaN(d.getTime())) return String(v);
+  return d.toLocaleString("zh-CN", { hour12: false });
+}
+
+function state(el, text, isError, retry) {
+  el.innerHTML = '<div class="state' + (isError ? " error" : "") + '">' + esc(text) +
+    (retry ? '<div><button class="btn ghost sm" data-retry="1">重试</button></div>' : "") + "</div>";
+  if (retry) el.querySelector("[data-retry]").addEventListener("click", retry);
+}
+
+async function api(path, opt) {
+  opt = opt || {};
+  const headers = Object.assign({ "Content-Type": "application/json" }, opt.headers || {});
+  const t = token();
+  if (t) headers["X-Admin-Token"] = t;
+  let res;
+  try {
+    res = await fetch(path, Object.assign({}, opt, { headers: headers }));
+  } catch (e) {
+    throw new Error("网络连接失败，请确认服务端已启动");
+  }
+  let data = null;
+  try { data = await res.json(); } catch (e) { data = null; }
+  if (res.status === 401 || res.status === 403) {
+    const msg = (data && data.error) || "管理令牌无效，请重新登录";
+    showLogin(msg);
+    throw new Error(msg);
+  }
+  if (!res.ok) {
+    throw new Error((data && data.error) || ("请求失败（HTTP " + res.status + "）"));
+  }
+  return data;
+}
+
+function showLogin(msg) {
+  localStorage.removeItem(KEY);
+  $("#app").classList.add("hidden");
+  $("#login").classList.remove("hidden");
+  $("#loginErr").textContent = msg || "";
+}
+
+// multipart 上传（不能用 JSON Content-Type）
+async function apiUpload(path, formData) {
+  const headers = {};
+  const t = token();
+  if (t) headers["X-Admin-Token"] = t;
+  let res;
+  try {
+    res = await fetch(path, { method: "POST", headers: headers, body: formData });
+  } catch (e) {
+    throw new Error("网络连接失败，请确认服务端已启动");
+  }
+  let data = null;
+  try { data = await res.json(); } catch (e) { data = null; }
+  if (res.status === 401 || res.status === 403) {
+    const msg = (data && data.error) || "管理令牌无效，请重新登录";
+    showLogin(msg);
+    throw new Error(msg);
+  }
+  if (!res.ok) throw new Error((data && data.error) || ("上传失败（HTTP " + res.status + "）"));
+  return data;
+}
+
+async function tryEnter(t) {
+  localStorage.setItem(KEY, t);
+  try {
+    await api("/api/admin/stats");
+    enterApp();
+  } catch (e) {
+    if (!$("#login").classList.contains("hidden")) $("#loginErr").textContent = e.message;
+  }
+}
+
+function enterApp() {
+  $("#login").classList.add("hidden");
+  $("#app").classList.remove("hidden");
+  loadView(currentView);
+}
+
+function switchView(v) {
+  currentView = v;
+  document.querySelectorAll(".view").forEach((el) => el.classList.add("hidden"));
+  const sec = $("#view-" + v);
+  if (sec) sec.classList.remove("hidden");
+  document.querySelectorAll("#nav button").forEach((b) => {
+    b.classList.toggle("active", b.dataset.view === v);
+  });
+  loadView(v);
+}
+
+async function loadView(v) {
+  try {
+    if (v === "overview") return await loadStats();
+    if (v === "users") return await loadUsers();
+    if (v === "ann") return await loadAnns();
+    if (v === "rooms") return await loadRooms();
+    if (v === "servers") return await loadServers();
+    if (v === "mods") return await loadMods();
+    if (v === "packages") return await loadPackages();
+    if (v === "update") return await loadUpdate();
+  } catch (e) {
+    if (v === "overview") state($("#statsBox"), "加载失败：" + e.message, true, () => loadStats());
+    if (v === "users") state($("#usersBox"), "加载失败：" + e.message, true, () => loadUsers());
+    if (v === "ann") state($("#annBox"), "加载失败：" + e.message, true, () => loadAnns());
+    if (v === "rooms") state($("#roomsBox"), "加载失败：" + e.message, true, () => loadRooms());
+    if (v === "servers") state($("#serversBox"), "加载失败：" + e.message, true, () => loadServers());
+    if (v === "mods") state($("#modsBox"), "加载失败：" + e.message, true, () => loadMods());
+    if (v === "packages") state($("#pkBox"), "加载失败：" + e.message, true, () => loadPackages());
+    if (v === "update") state($("#updCurrent"), "加载失败：" + e.message, true, () => loadUpdate());
+  }
+}
+
+/* ---------- 概览 ---------- */
+async function loadStats() {
+  const box = $("#statsBox");
+  box.innerHTML = "";
+  const d = await api("/api/admin/stats");
+  const items = [
+    ["用户数", d.users], ["好友数", d.friends], ["待处理请求", d.requests],
+    ["分享包", d.packages], ["公告", d.announcements], ["活跃房间", d.rooms]
+  ];
+  box.innerHTML = items.map((it) =>
+    '<div class="stat"><div class="k">' + esc(it[0]) + '</div><div class="v">' +
+    Number(it[1] || 0) + "</div></div>"
+  ).join("");
+}
+
+/* ---------- 用户管理 ---------- */
+async function loadUsers() {
+  const box = $("#usersBox");
+  state(box, "加载中…");
+  const d = await api("/api/admin/users");
+  const list = d.users || [];
+  if (!list.length) { state(box, "还没有任何用户，先在上方创建一个吧"); return; }
+  box.innerHTML = '<div class="tbl-wrap"><table><thead><tr>' +
+    "<th>用户名</th><th>昵称</th><th>创建时间</th><th>用户 ID</th><th>操作</th>" +
+    "</tr></thead><tbody>" +
+    list.map((u) =>
+      "<tr><td>" + esc(u.username) + "</td><td>" + esc(u.nickname) +
+      "</td><td>" + esc(fmtTime(u.created_at)) +
+      '</td><td class="mono">' + esc(u.id) +
+      '</td><td><button class="btn danger sm" data-del="' + esc(u.id) + '">删除</button></td></tr>'
+    ).join("") + "</tbody></table></div>";
+  box.querySelectorAll("[data-del]").forEach((b) => {
+    b.addEventListener("click", async () => {
+      if (!confirm("确定删除该用户吗？其好友关系会一并解除，此操作不可恢复。")) return;
+      b.disabled = true;
+      try {
+        await api("/api/admin/users/" + encodeURIComponent(b.dataset.del), { method: "DELETE" });
+        toast("用户已删除", "ok");
+        loadUsers();
+      } catch (e) {
+        toast(e.message, "err");
+        b.disabled = false;
+      }
+    });
+  });
+}
+
+async function createUser() {
+  const btn = $("#nuBtn");
+  const name = $("#nuName").value.trim();
+  const pass = $("#nuPass").value;
+  const nick = $("#nuNick").value.trim();
+  $("#nuMsg").textContent = "";
+  if (!name || !pass) { $("#nuMsg").textContent = "请填写用户名与密码"; return; }
+  btn.disabled = true;
+  try {
+    const d = await api("/api/admin/users", {
+      method: "POST",
+      body: JSON.stringify({ username: name, password: pass, nickname: nick })
+    });
+    toast("用户 " + d.username + " 创建成功", "ok");
+    $("#nuName").value = ""; $("#nuPass").value = ""; $("#nuNick").value = "";
+    loadUsers();
+  } catch (e) {
+    $("#nuMsg").textContent = e.message;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+/* ---------- 公告 ---------- */
+async function loadAnns() {
+  const box = $("#annBox");
+  state(box, "加载中…");
+  const d = await api("/api/announcements");
+  const list = d.announcements || [];
+  if (!list.length) { state(box, "暂无公告，可在上方发布一条"); return; }
+  const lvlTag = { info: "普通", warning: "警告", update: "更新" };
+  box.innerHTML = list.map((a) =>
+    '<div class="ann-item"><div class="t">' + esc(a.title) +
+    '<span class="tag' + (a.level === "warning" ? " red" : a.level === "update" ? " green" : "") + '">' +
+    esc(lvlTag[a.level] || a.level || "普通") + "</span>" +
+    (a.pinned ? '<span class="tag gray">置顶</span>' : "") +
+    "</div>" +
+    '<div class="b">' + esc(a.body) + "</div>" +
+    '<div class="m"><span>' + esc(fmtTime(a.created_at)) + "</span>" +
+    '<button class="btn danger sm" data-del="' + esc(a.id) + '">删除</button></div></div>'
+  ).join("");
+  box.querySelectorAll("[data-del]").forEach((b) => {
+    b.addEventListener("click", async () => {
+      if (!confirm("确定删除这条公告吗？")) return;
+      b.disabled = true;
+      try {
+        await api("/api/announcements/" + encodeURIComponent(b.dataset.del), { method: "DELETE" });
+        toast("公告已删除", "ok");
+        loadAnns();
+      } catch (e) { toast(e.message, "err"); b.disabled = false; }
+    });
+  });
+}
+
+async function createAnn() {
+  const btn = $("#annBtn");
+  const title = $("#annTitle").value.trim();
+  const body = $("#annBody").value.trim();
+  if (!title || !body) { toast("标题与正文不能为空", "err"); return; }
+  btn.disabled = true;
+  try {
+    await api("/api/announcements", {
+      method: "POST",
+      body: JSON.stringify({
+        title: title, body: body,
+        level: $("#annLevel").value, pinned: $("#annPin").checked
+      })
+    });
+    toast("公告已发布", "ok");
+    $("#annTitle").value = ""; $("#annBody").value = ""; $("#annPin").checked = false;
+    loadAnns();
+  } catch (e) { toast(e.message, "err"); }
+  finally { btn.disabled = false; }
+}
+
+/* ---------- 房间 / 固定服务器 ---------- */
+async function loadRooms() {
+  const box = $("#roomsBox");
+  state(box, "加载中…");
+  const d = await api("/api/admin/rooms");
+  const list = d.rooms || [];
+  if (!list.length) { state(box, "当前没有活跃房间"); return; }
+  box.innerHTML = '<div class="tbl-wrap"><table><thead><tr>' +
+    "<th>房间名</th><th>房主</th><th>地址</th><th>游戏</th><th>人数</th><th>来源</th><th>私密</th><th>最后心跳</th><th>操作</th>" +
+    "</tr></thead><tbody>" +
+    list.map((r) =>
+      "<tr><td>" + esc(r.name) + "</td><td>" + esc(r.owner_name || r.owner) +
+      '</td><td class="mono">' + esc(r.host) + ":" + esc(r.port) +
+      "</td><td>" + esc(r.gameid || "—") +
+      "</td><td>" + esc(r.players) + "/" + esc(r.max_players) +
+      '</td><td><span class="tag gray">' + esc(r.source || "—") + "</span></td>" +
+      '<td><span class="tag ' + (r.private ? "" : "gray") + '">' + (r.private ? "仅好友" : "公开") + "</span></td>" +
+      "<td>" + esc(fmtTime(r.last_heartbeat)) + "</td>" +
+      '<td><button class="btn danger sm" data-kick="' + esc(r.id) + '">踢出</button></td></tr>'
+    ).join("") + "</tbody></table></div>";
+  box.querySelectorAll("[data-kick]").forEach((b) => {
+    b.addEventListener("click", async () => {
+      if (!confirm("确定踢出该房间吗？房主需重新注册才会再出现。")) return;
+      b.disabled = true;
+      try {
+        await api("/api/admin/rooms/" + encodeURIComponent(b.dataset.kick), { method: "DELETE" });
+        toast("房间已踢出", "ok");
+        loadRooms();
+      } catch (e) { toast(e.message, "err"); b.disabled = false; }
+    });
+  });
+}
+
+async function loadServers() {
+  const box = $("#serversBox");
+  state(box, "加载中…");
+  const d = await api("/api/admin/servers");
+  const list = d.servers || [];
+  if (!list.length) {
+    state(box, "未配置固定服务器 — 在上方表单创建一台");
+    return;
+  }
+  box.innerHTML = '<div class="tbl-wrap"><table><thead><tr>' +
+    "<th>名称</th><th>端口</th><th>状态</th><th>PID</th><th>重启</th><th>游戏</th><th>世界</th><th>操作</th>" +
+    "</tr></thead><tbody>" +
+    list.map((s) =>
+      "<tr><td>" + esc(s.name) + "</td><td>" + esc(s.port) +
+      '</td><td><span class="tag ' + (s.running ? "green" : "red") + '">' +
+      (s.running ? "运行中" : "未运行") + "</span></td>" +
+      '<td class="mono">' + esc(s.pid || "—") + "</td><td>" + esc(s.restarts || 0) +
+      "</td><td>" + esc(s.gameid || "—") + "</td><td>" + esc(s.world || "—") + "</td>" +
+      '<td><span style="display:flex;gap:6px;flex-wrap:wrap">' +
+      '<button class="btn sm" data-fs="start" data-name="' + esc(s.name) + '">启动</button>' +
+      '<button class="btn ghost sm" data-fs="stop" data-name="' + esc(s.name) + '">停止</button>' +
+      '<button class="btn ghost sm" data-fs="restart" data-name="' + esc(s.name) + '">重启</button>' +
+      '<button class="btn danger sm" data-fsdel="' + esc(s.name) + '">删除</button>' +
+      "</span></td></tr>"
+    ).join("") + "</tbody></table></div>";
+  box.querySelectorAll("[data-fs]").forEach((b) => {
+    b.addEventListener("click", async () => {
+      b.disabled = true;
+      try {
+        await api("/api/admin/servers/" + encodeURIComponent(b.dataset.name) + "/" + b.dataset.fs,
+          { method: "POST" });
+        toast(b.dataset.fs === "start" ? "已发送启动指令"
+          : b.dataset.fs === "stop" ? "已发送停止指令" : "已发送重启指令", "ok");
+        setTimeout(loadServers, 800);
+      } catch (e) { toast(e.message, "err"); b.disabled = false; }
+    });
+  });
+  box.querySelectorAll("[data-fsdel]").forEach((b) => {
+    b.addEventListener("click", async () => {
+      if (!confirm("删除固定服务器「" + b.dataset.fsdel + "」？会停止进程并从配置移除（磁盘数据不动）。")) return;
+      b.disabled = true;
+      try {
+        await api("/api/admin/servers/" + encodeURIComponent(b.dataset.fsdel), { method: "DELETE" });
+        toast("已删除", "ok");
+        loadServers();
+      } catch (e) { toast(e.message, "err"); b.disabled = false; }
+    });
+  });
+}
+
+async function createServer() {
+  const btn = $("#fsBtn");
+  const req = {
+    name: $("#fsName").value.trim(),
+    bin: $("#fsBin").value.trim(),
+    port: parseInt($("#fsPort").value, 10) || 0,
+    gameid: $("#fsGame").value.trim(),
+    world: $("#fsWorld").value.trim(),
+    config: $("#fsConf").value.trim()
+  };
+  $("#fsMsg").textContent = "";
+  if (!req.name || !req.bin || !req.port) {
+    $("#fsMsg").textContent = "房间名、可执行文件与端口为必填";
+    return;
+  }
+  btn.disabled = true;
+  try {
+    await api("/api/admin/servers", { method: "POST", body: JSON.stringify(req) });
+    toast("固定服务器「" + req.name + "」创建成功", "ok");
+    $("#fsName").value = ""; $("#fsBin").value = ""; $("#fsWorld").value = "";
+    $("#fsConf").value = ""; $("#fsGame").value = "";
+    loadServers();
+  } catch (e) { $("#fsMsg").textContent = e.message; }
+  finally { btn.disabled = false; }
+}
+
+/* ---------- 模组仓库 ---------- */
+async function loadMods() {
+  const box = $("#modsBox");
+  state(box, "加载中…");
+  const d = await api("/api/admin/mods");
+  const list = d.mods || [];
+  if (!list.length) { state(box, "仓库是空的 — 在上方上传第一个模组 zip"); return; }
+  box.innerHTML = '<div class="tbl-wrap"><table><thead><tr>' +
+    "<th>文件</th><th>名称</th><th>标题</th><th>作者</th><th>版本</th><th>大小</th><th>操作</th>" +
+    "</tr></thead><tbody>" +
+    list.map((m) =>
+      "<tr>" +
+      '<td class="mono">' + esc(m.filename) + "</td><td>" + esc(m.name) +
+      "</td><td>" + esc(m.title || "—") + "</td><td>" + esc(m.author || "—") +
+      "</td><td>" + esc(m.version || "—") + "</td><td>" +
+      esc((m.size / 1024).toFixed(1) + " KB") + "</td>" +
+      '<td><button class="btn danger sm" data-delm="' + esc(m.filename) + '">删除</button></td></tr>'
+    ).join("") + "</tbody></table></div>";
+  box.querySelectorAll("[data-delm]").forEach((b) => {
+    b.addEventListener("click", async () => {
+      if (!confirm("删除仓库模组「" + b.dataset.delm + "」？客户端将无法再下载。")) return;
+      b.disabled = true;
+      try {
+        await api("/api/admin/mods/" + encodeURIComponent(b.dataset.delm), { method: "DELETE" });
+        toast("模组已删除", "ok");
+        loadMods();
+      } catch (e) { toast(e.message, "err"); b.disabled = false; }
+    });
+  });
+}
+
+async function uploadMod() {
+  const btn = $("#mdBtn");
+  const input = $("#mdFile");
+  $("#mdMsg").textContent = "";
+  const f = input.files && input.files[0];
+  if (!f) { $("#mdMsg").textContent = "请先选择模组 zip 文件"; return; }
+  btn.disabled = true;
+  $("#mdMsg").textContent = "上传中…";
+  try {
+    const fd = new FormData();
+    fd.append("file", f, f.name);
+    const res = await apiUpload("/api/admin/mods", fd);
+    toast("模组 " + (res.filename || f.name) + " 上传成功", "ok");
+    input.value = "";
+    $("#mdMsg").textContent = "";
+    loadMods();
+  } catch (e) { $("#mdMsg").textContent = e.message; }
+  finally { btn.disabled = false; }
+}
+
+/* ---------- 分享包 ---------- */
+async function loadPackages() {
+  const box = $("#pkBox");
+  state(box, "加载中…");
+  const params = new URLSearchParams({ limit: "100" });
+  const t = $("#pkType").value;
+  const kw = $("#pkKw").value.trim();
+  if (t) params.set("type", t);
+  if (kw) params.set("q", kw);
+  const d = await api("/api/admin/packages?" + params.toString());
+  const list = d.packages || [];
+  if (!list.length) { state(box, "没有匹配的分享包"); return; }
+  box.innerHTML = '<div class="tbl-wrap"><table><thead><tr>' +
+    "<th>名称</th><th>类型</th><th>作者</th><th>版本</th><th>下载</th><th>大小</th><th>时间</th><th>操作</th>" +
+    "</tr></thead><tbody>" +
+    list.map((p) =>
+      "<tr><td>" + esc(p.name) + "</td>" +
+      '<td><span class="tag ' + (p.type === "mod" ? "green" : "") + '">' +
+      (p.type === "mod" ? "模组" : "地图") + "</span></td>" +
+      "<td>" + esc(p.author_name || p.author) + "</td><td>" + esc(p.version) +
+      "</td><td>" + esc(p.downloads || 0) + "</td><td>" +
+      esc((p.size / 1024 / 1024).toFixed(2) + " MB") + "</td><td>" +
+      esc(fmtTime(p.created_at)) + "</td>" +
+      '<td><button class="btn danger sm" data-delp="' + esc(p.id) + '">删除</button></td></tr>'
+    ).join("") + "</tbody></table></div>";
+  box.querySelectorAll("[data-delp]").forEach((b) => {
+    b.addEventListener("click", async () => {
+      if (!confirm("强制删除该分享包？下载链接会立即失效。")) return;
+      b.disabled = true;
+      try {
+        await api("/api/admin/packages/" + encodeURIComponent(b.dataset.delp), { method: "DELETE" });
+        toast("分享包已删除", "ok");
+        loadPackages();
+      } catch (e) { toast(e.message, "err"); b.disabled = false; }
+    });
+  });
+}
+
+/* ---------- 更新推送 ---------- */
+async function loadUpdate() {
+  const el = $("#updCurrent");
+  const d = await api("/api/client-update");
+  $("#updVer").value = d.latest || "";
+  $("#updNotes").value = d.notes || "";
+  $("#updMirrors").value = (d.mirrors || []).join("\n");
+  el.textContent = "当前已推送版本：" + (d.latest || "（未设置）") +
+    "　发布时间：" + fmtTime(d.published_at);
+}
+
+async function saveUpdate() {
+  const btn = $("#updBtn");
+  const ver = $("#updVer").value.trim();
+  $("#updMsg").textContent = "";
+  if (!ver) { $("#updMsg").textContent = "版本号不能为空"; return; }
+  const mirrors = $("#updMirrors").value.split("\n").map((s) => s.trim()).filter(Boolean);
+  btn.disabled = true;
+  try {
+    await api("/api/client-update", {
+      method: "PUT",
+      body: JSON.stringify({ version: ver, notes: $("#updNotes").value, mirrors: mirrors })
+    });
+    toast("更新推送已保存", "ok");
+    loadUpdate();
+  } catch (e) { $("#updMsg").textContent = e.message; }
+  finally { btn.disabled = false; }
+}
+
+/* ---------- 事件绑定 ---------- */
+document.addEventListener("DOMContentLoaded", () => {
+  $("#loginBtn").addEventListener("click", () => {
+    const t = $("#tok").value.trim();
+    if (!t) { $("#loginErr").textContent = "请输入管理令牌"; return; }
+    $("#loginErr").textContent = "";
+    tryEnter(t);
+  });
+  $("#tok").addEventListener("keydown", (e) => { if (e.key === "Enter") $("#loginBtn").click(); });
+
+  $("#logoutBtn").addEventListener("click", () => showLogin("已退出登录"));
+
+  document.querySelectorAll("#nav button").forEach((b) => {
+    b.addEventListener("click", () => switchView(b.dataset.view));
+  });
+  document.querySelectorAll("[data-reload]").forEach((b) => {
+    b.addEventListener("click", () => loadView(b.dataset.reload));
+  });
+
+  $("#nuBtn").addEventListener("click", createUser);
+  $("#annBtn").addEventListener("click", createAnn);
+  $("#updBtn").addEventListener("click", saveUpdate);
+  $("#fsBtn").addEventListener("click", createServer);
+  $("#mdBtn").addEventListener("click", uploadMod);
+  $("#pkBtn").addEventListener("click", loadPackages);
+  $("#pkKw").addEventListener("keydown", (e) => { if (e.key === "Enter") loadPackages(); });
+
+  if (token()) tryEnter(token());
+  else showLogin("");
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "listen": ":8080",
+  "data_dir": "data",
+  "jwt_secret": "CHANGE-ME-to-a-long-random-string-32bytes-min",
+  "token_ttl_minutes": 10080,
+  "public_base": "http://localhost:8080",
+  "fixed_servers": [],
+  "admin_token": "CHANGE-ME-admin-token",
+  "announcements": [],
+  "client_update": {
+    "version": "1.0.0",
+    "notes": "更新说明",
+    "mirrors": [
+      "https://example.com/LUNATICN-client.zip"
+    ]
+  }
+}
